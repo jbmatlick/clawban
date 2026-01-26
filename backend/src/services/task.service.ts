@@ -16,11 +16,17 @@ interface TasksData {
 }
 
 /**
- * Get all tasks
+ * Get all tasks with optional filtering
  */
-export async function getAllTasks(): Promise<Task[]> {
+export async function getAllTasks(assignee?: string | null): Promise<Task[]> {
   const data = await readData<TasksData>();
-  return data.tasks;
+  
+  if (assignee === undefined) {
+    return data.tasks;
+  }
+  
+  // Filter by assignee (including null)
+  return data.tasks.filter(task => task.assignee === assignee);
 }
 
 /**
@@ -46,6 +52,7 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
       estimated_token_cost: request.estimated_token_cost || 0,
       estimated_dollar_cost: request.estimated_dollar_cost || 0,
       status: 'new',
+      assignee: request.assignee || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       completed_at: null,

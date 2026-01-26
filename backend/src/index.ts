@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { nanoid } from 'nanoid';
 import taskRoutes from './routes/task.routes.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth } from './middleware/api-key-auth.js';
 import { logger } from './lib/logger.js';
 
 const app = express();

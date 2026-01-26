@@ -12,7 +12,8 @@
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "lint": "eslint src --max-warnings 0",
     "format": "prettier --write \"src/**/*.ts\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:assignee": "tsx src/migrate-assignee.ts"
   },
   "keywords": [
     "api",

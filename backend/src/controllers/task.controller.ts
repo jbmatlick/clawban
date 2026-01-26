@@ -15,11 +15,19 @@ import type {
 import * as taskService from '../services/task.service.js';
 
 /**
- * List all tasks
+ * List all tasks with optional assignee filter
+ * Query param: ?assignee=rufus or ?assignee=james or ?assignee=null
  */
-export async function listTasks(_req: Request, res: Response): Promise<void> {
+export async function listTasks(req: Request, res: Response): Promise<void> {
   try {
-    const tasks = await taskService.getAllTasks();
+    const assigneeParam = req.query.assignee as string | undefined;
+    let assigneeFilter: string | null | undefined = undefined;
+    
+    if (assigneeParam !== undefined) {
+      assigneeFilter = assigneeParam === 'null' ? null : assigneeParam;
+    }
+    
+    const tasks = await taskService.getAllTasks(assigneeFilter);
     const response: ApiResponse<ListTasksResponse> = {
       success: true,
       data: {

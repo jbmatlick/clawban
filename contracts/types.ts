@@ -14,6 +14,11 @@ export type ModelStrategy = 'opus-planning' | 'opus-coding' | 'sonnet-coding' | 
 export type TaskStatus = 'new' | 'approved' | 'in-progress' | 'complete';
 
 /**
+ * Task assignee
+ */
+export type TaskAssignee = 'rufus' | 'james' | null;
+
+/**
  * LLM usage entry for tracking costs
  */
 export interface LLMUsage {
@@ -35,6 +40,7 @@ export interface Task {
   estimated_token_cost: number;
   estimated_dollar_cost: number;
   status: TaskStatus;
+  assignee: TaskAssignee;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -50,6 +56,7 @@ export interface CreateTaskRequest {
   model_strategy: ModelStrategy;
   estimated_token_cost?: number;
   estimated_dollar_cost?: number;
+  assignee?: TaskAssignee;
 }
 
 /**
@@ -62,6 +69,7 @@ export interface UpdateTaskRequest {
   estimated_token_cost?: number;
   estimated_dollar_cost?: number;
   status?: TaskStatus;
+  assignee?: TaskAssignee;
 }
 
 /**

@@ -6,6 +6,7 @@ import { body, param } from 'express-validator';
 
 const MODEL_STRATEGIES = ['opus-planning', 'opus-coding', 'sonnet-coding', 'mixed'];
 const TASK_STATUSES = ['new', 'approved', 'in-progress', 'complete'];
+const TASK_ASSIGNEES = ['rufus', 'james', null];
 
 export const createTaskValidators = [
   body('title')
@@ -29,6 +30,10 @@ export const createTaskValidators = [
     .optional()
     .isFloat({ min: 0 })
     .withMessage('Estimated dollar cost must be a positive number'),
+  body('assignee')
+    .optional()
+    .custom((value) => TASK_ASSIGNEES.includes(value))
+    .withMessage(`Assignee must be one of: ${TASK_ASSIGNEES.filter(a => a !== null).join(', ')} or null`),
 ];
 
 export const updateTaskValidators = [
@@ -60,6 +65,10 @@ export const updateTaskValidators = [
     .optional()
     .isIn(TASK_STATUSES)
     .withMessage(`Status must be one of: ${TASK_STATUSES.join(', ')}`),
+  body('assignee')
+    .optional()
+    .custom((value) => TASK_ASSIGNEES.includes(value))
+    .withMessage(`Assignee must be one of: ${TASK_ASSIGNEES.filter(a => a !== null).join(', ')} or null`),
 ];
 
 export const moveTaskValidators = [
