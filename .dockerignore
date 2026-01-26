@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!DEPLOYMENT.md
+LICENSE
+
+# Node modules (we'll install fresh)
+**/node_modules
+**/dist
+
+# Environment files (use Railway env vars)
+**/.env
+**/.env.*
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+**/jest.config.*
+**/__tests__
+
+# Frontend (not needed for backend deploy)
+frontend/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

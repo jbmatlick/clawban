@@ -1,37 +1,43 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy backend package files
+# Copy shared contracts (needed by backend imports)
+COPY contracts/ ./contracts/
+
+# Copy backend files
 COPY backend/package*.json ./backend/
 COPY backend/tsconfig.json ./backend/
-
-# Install backend dependencies
-RUN cd backend && npm ci
-
-# Copy backend source
 COPY backend/src ./backend/src
 
+# Install ALL dependencies (including dev deps for TypeScript compilation)
+WORKDIR /app/backend
+RUN npm ci
+
 # Build TypeScript
-RUN cd backend && npm run build
+RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy package files
 COPY backend/package*.json ./
 
-# Install production dependencies only
+# Install ONLY production dependencies
 RUN npm ci --only=production
 
-# Copy built files from builder
+# Copy built JavaScript files from builder
 COPY --from=builder /app/backend/dist ./dist
 
-# Expose port (Railway will override with PORT env var)
+# Expose port (Railway provides $PORT at runtime)
 EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3001) + '/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
 
 # Start the app
 CMD ["node", "dist/index.js"]
