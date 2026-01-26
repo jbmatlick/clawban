@@ -12,7 +12,7 @@ import type {
 } from '../../../contracts/types';
 import { supabase } from '../lib/supabase';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /**
  * Get auth token for API requests
@@ -49,7 +49,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function listTasks(): Promise<ListTasksResponse> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks`, { headers });
+  const response = await fetch(`${API_BASE}/api/tasks`, { headers });
   return handleResponse<ListTasksResponse>(response);
 }
 
@@ -58,7 +58,7 @@ export async function listTasks(): Promise<ListTasksResponse> {
  */
 export async function getTask(id: string): Promise<Task> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks/${id}`, { headers });
+  const response = await fetch(`${API_BASE}/api/tasks/${id}`, { headers });
   return handleResponse<Task>(response);
 }
 
@@ -67,7 +67,7 @@ export async function getTask(id: string): Promise<Task> {
  */
 export async function createTask(request: CreateTaskRequest): Promise<Task> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks`, {
+  const response = await fetch(`${API_BASE}/api/tasks`, {
     method: 'POST',
     headers,
     body: JSON.stringify(request),
@@ -80,7 +80,7 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
  */
 export async function updateTask(id: string, request: UpdateTaskRequest): Promise<Task> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks/${id}`, {
+  const response = await fetch(`${API_BASE}/api/tasks/${id}`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify(request),
@@ -93,7 +93,7 @@ export async function updateTask(id: string, request: UpdateTaskRequest): Promis
  */
 export async function deleteTask(id: string): Promise<void> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks/${id}`, {
+  const response = await fetch(`${API_BASE}/api/tasks/${id}`, {
     method: 'DELETE',
     headers,
   });
@@ -105,7 +105,7 @@ export async function deleteTask(id: string): Promise<void> {
  */
 export async function moveTask(id: string, request: MoveTaskRequest): Promise<Task> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/tasks/${id}/move`, {
+  const response = await fetch(`${API_BASE}/api/tasks/${id}/move`, {
     method: 'POST',
     headers,
     body: JSON.stringify(request),
