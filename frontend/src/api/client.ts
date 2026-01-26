@@ -1,5 +1,5 @@
 /**
- * API client for Clawban backend
+ * API client for Clawban backend with auth
  */
 
 import type {
@@ -10,8 +10,26 @@ import type {
   ApiResponse,
   ListTasksResponse,
 } from '../../../contracts/types';
+import { supabase } from '../lib/supabase';
 
 const API_BASE = '/api';
+
+/**
+ * Get auth token for API requests
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  return headers;
+}
 
 /**
  * Handle API response and errors
@@ -30,7 +48,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
  * List all tasks
  */
 export async function listTasks(): Promise<ListTasksResponse> {
-  const response = await fetch(`${API_BASE}/tasks`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE}/tasks`, { headers });
   return handleResponse<ListTasksResponse>(response);
 }
 
@@ -38,7 +57,8 @@ export async function listTasks(): Promise<ListTasksResponse> {
  * Get single task
  */
 export async function getTask(id: string): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/${id}`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE}/tasks/${id}`, { headers });
   return handleResponse<Task>(response);
 }
 
@@ -46,9 +66,10 @@ export async function getTask(id: string): Promise<Task> {
  * Create a new task
  */
 export async function createTask(request: CreateTaskRequest): Promise<Task> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/tasks`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(request),
   });
   return handleResponse<Task>(response);
@@ -58,9 +79,10 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
  * Update a task
  */
 export async function updateTask(id: string, request: UpdateTaskRequest): Promise<Task> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/tasks/${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(request),
   });
   return handleResponse<Task>(response);
@@ -70,8 +92,10 @@ export async function updateTask(id: string, request: UpdateTaskRequest): Promis
  * Delete a task
  */
 export async function deleteTask(id: string): Promise<void> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/tasks/${id}`, {
     method: 'DELETE',
+    headers,
   });
   await handleResponse<{ id: string }>(response);
 }
@@ -80,9 +104,10 @@ export async function deleteTask(id: string): Promise<void> {
  * Move task to different status
  */
 export async function moveTask(id: string, request: MoveTaskRequest): Promise<Task> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/tasks/${id}/move`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(request),
   });
   return handleResponse<Task>(response);
