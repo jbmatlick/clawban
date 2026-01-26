@@ -13,16 +13,8 @@ WORKDIR /app/backend
 # Install dependencies
 RUN npm ci
 
-# Build TypeScript - show output for debugging
-RUN echo "=== Building TypeScript ===" && \
-    npm run build && \
-    echo "=== Build complete ===" && \
-    echo "=== Current directory ===" && \
-    pwd && \
-    echo "=== Directory structure ===" && \
-    find . -name "index.js" -type f | head -20 && \
-    echo "=== Listing all dist folders ===" && \
-    find . -name "dist" -type d
+# Build TypeScript
+RUN npm run build
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
@@ -30,5 +22,5 @@ RUN npm prune --production
 # Expose port
 EXPOSE 3001
 
-# Start app (TypeScript outputs to dist/backend/src/ due to include paths)
-CMD ["node", "dist/backend/src/index.js"]
+# Start app (uses npm start which knows the correct path)
+CMD ["npm", "start"]
