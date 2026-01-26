@@ -17,9 +17,12 @@ RUN npm ci
 RUN echo "=== Building TypeScript ===" && \
     npm run build && \
     echo "=== Build complete ===" && \
-    ls -la && \
-    echo "=== Checking dist/ ===" && \
-    ls -la dist/ || echo "ERROR: dist/ not found!"
+    echo "=== Current directory ===" && \
+    pwd && \
+    echo "=== Directory structure ===" && \
+    find . -name "index.js" -type f | head -20 && \
+    echo "=== Listing all dist folders ===" && \
+    find . -name "dist" -type d
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
