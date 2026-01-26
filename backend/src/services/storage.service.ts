@@ -6,6 +6,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import lockfile from 'proper-lockfile';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,4 +46,20 @@ export async function readData<T>(): Promise<T> {
 export async function writeData<T>(data: T): Promise<void> {
   await ensureDataFile();
   await fs.writeFile(TASKS_FILE, JSON.stringify(data, null, 2));
+}
+
+/**
+ * Execute a function with file locking to prevent race conditions
+ * This ensures read-modify-write operations are atomic
+ */
+export async function withLock<T>(fn: () => Promise<T>): Promise<T> {
+  await ensureDataFile();
+  const release = await lockfile.lock(TASKS_FILE, { 
+    retries: { retries: 5, minTimeout: 100, maxTimeout: 1000 } 
+  });
+  try {
+    return await fn();
+  } finally {
+    await release();
+  }
 }

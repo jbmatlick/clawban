@@ -3,7 +3,7 @@
  */
 
 import { DragDropContext, DropResult } from 'react-beautiful-dnd';
-import type { Task, TaskStatus } from '../../../contracts/types';
+import type { TaskStatus } from '../../../contracts/types';
 import { KanbanColumn } from './KanbanColumn';
 import { useTasks, useMoveTask } from '../api/hooks';
 import { Loader2 } from 'lucide-react';

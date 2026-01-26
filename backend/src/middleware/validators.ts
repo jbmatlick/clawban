@@ -2,7 +2,7 @@
  * Request validators using express-validator
  */
 
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 
 const MODEL_STRATEGIES = ['opus-planning', 'opus-coding', 'sonnet-coding', 'mixed'];
 const TASK_STATUSES = ['new', 'approved', 'in-progress', 'complete'];
@@ -16,8 +16,8 @@ export const createTaskValidators = [
   body('description')
     .isString()
     .trim()
-    .isLength({ min: 1 })
-    .withMessage('Description is required'),
+    .isLength({ min: 1, max: 10000 })
+    .withMessage('Description must be between 1 and 10,000 characters'),
   body('model_strategy')
     .isIn(MODEL_STRATEGIES)
     .withMessage(`Model strategy must be one of: ${MODEL_STRATEGIES.join(', ')}`),
@@ -42,8 +42,8 @@ export const updateTaskValidators = [
     .optional()
     .isString()
     .trim()
-    .isLength({ min: 1 })
-    .withMessage('Description cannot be empty'),
+    .isLength({ min: 1, max: 10000 })
+    .withMessage('Description must be between 1 and 10,000 characters'),
   body('model_strategy')
     .optional()
     .isIn(MODEL_STRATEGIES)
@@ -66,4 +66,12 @@ export const moveTaskValidators = [
   body('status')
     .isIn(TASK_STATUSES)
     .withMessage(`Status must be one of: ${TASK_STATUSES.join(', ')}`),
+];
+
+export const idParamValidator = [
+  param('id')
+    .isString()
+    .isLength({ min: 1, max: 30 })
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Invalid task ID format'),
 ];
