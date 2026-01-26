@@ -8,11 +8,16 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { nanoid } from 'nanoid';
 import taskRoutes from './routes/task.routes.js';
 import { requireAuth } from './middleware/auth.js';
+import { logger } from './lib/logger.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust Railway proxy for rate limiting
+app.set('trust proxy', 1);
 
 // Security: Helmet for HTTP headers
 app.use(helmet({
@@ -43,9 +48,27 @@ app.use(cors({
 // Security: Request size limits
 app.use(express.json({ limit: '1mb' }));
 
-// Request logging
-app.use((req, _res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+// Request ID and logging middleware
+app.use((req, res, next) => {
+  const requestId = (req.headers['x-request-id'] as string) || nanoid();
+  req.requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
+
+  const startTime = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    logger.info('Request completed', {
+      requestId,
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      userId: (req as any).user?.id,
+      ip: req.ip,
+    });
+  });
+
   next();
 });
 
@@ -66,8 +89,14 @@ app.use((_req, res) => {
 });
 
 // Error handler
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logger.error('Unhandled error', {
+    requestId: (req as any).requestId,
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
   res.status(500).json({
     success: false,
     error: 'Internal server error',
@@ -76,10 +105,12 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Clawban API running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`📝 API endpoints: http://localhost:${PORT}/api/tasks`);
-  console.log(`🔒 Security: Helmet, rate limiting, request limits enabled`);
+  logger.info('Clawban API started', {
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    healthCheck: `http://localhost:${PORT}/health`,
+    endpoints: `http://localhost:${PORT}/api/tasks`,
+  });
 });
 
 export default app;

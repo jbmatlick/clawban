@@ -32,6 +32,7 @@
     "nanoid": "^5.0.9",
     "proper-lockfile": "^4.1.2",
     "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
     "yaml": "^2.7.0"
   },
   "devDependencies": {

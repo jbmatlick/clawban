@@ -15,6 +15,7 @@ export interface AuthUser {
 declare module 'express-serve-static-core' {
   interface Request {
     user?: AuthUser;
+    requestId?: string;
   }
 }
 
