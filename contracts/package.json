@@ -1,0 +1,11 @@
+{
+  "name": "@clawban/contracts",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for Clawban",
+  "main": "types.ts",
+  "types": "types.ts",
+  "private": true,
+  "keywords": ["types", "contracts", "typescript"],
+  "author": "James Matlick",
+  "license": "MIT"
+}
