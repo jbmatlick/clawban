@@ -22,12 +22,18 @@ interface TasksData {
 export async function getAllTasks(assignee?: string | null): Promise<Task[]> {
   const data = await readData<TasksData>();
   
+  // Ensure all tasks have tags field (migration from old data)
+  const tasks = data.tasks.map(task => ({
+    ...task,
+    tags: task.tags || [],
+  }));
+  
   if (assignee === undefined) {
-    return data.tasks;
+    return tasks;
   }
   
   // Filter by assignee (including null)
-  return data.tasks.filter(task => task.assignee === assignee);
+  return tasks.filter(task => task.assignee === assignee);
 }
 
 /**
@@ -83,19 +89,24 @@ export async function updateTask(id: string, request: UpdateTaskRequest): Promis
       return null;
     }
 
+    const existingTask = data.tasks[taskIndex];
+    
     // Ensure tags exist and get normalized names if tags are being updated
-    const tags = request.tags ? await ensureTagsExist(request.tags) : data.tasks[taskIndex].tags;
+    // Default to empty array if tags field doesn't exist (migration from old data)
+    const tags = request.tags 
+      ? await ensureTagsExist(request.tags) 
+      : (existingTask.tags || []);
 
     const updatedTask: Task = {
-      ...data.tasks[taskIndex],
+      ...existingTask,
       ...request,
       tags,
       updated_at: new Date().toISOString(),
       // Set completed_at if status changed to complete
       completed_at:
-        request.status === 'complete' && data.tasks[taskIndex].status !== 'complete'
+        request.status === 'complete' && existingTask.status !== 'complete'
           ? new Date().toISOString()
-          : data.tasks[taskIndex].completed_at,
+          : existingTask.completed_at,
     };
 
     data.tasks[taskIndex] = updatedTask;
