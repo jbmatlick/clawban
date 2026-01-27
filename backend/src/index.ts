@@ -107,14 +107,16 @@ app.use((err: Error, req: express.Request, res: express.Response, _next: express
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  logger.info('Clawban API started', {
-    port: PORT,
-    nodeEnv: process.env.NODE_ENV || 'development',
-    healthCheck: `http://localhost:${PORT}/health`,
-    endpoints: `http://localhost:${PORT}/api/tasks`,
+// Start server (only if not in test mode)
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info('Clawban API started', {
+      port: PORT,
+      nodeEnv: process.env.NODE_ENV || 'development',
+      healthCheck: `http://localhost:${PORT}/health`,
+      endpoints: `http://localhost:${PORT}/api/tasks`,
+    });
   });
-});
+}
 
 export default app;

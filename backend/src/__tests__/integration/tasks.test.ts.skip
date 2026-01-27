@@ -1,0 +1,304 @@
+/**
+ * Integration tests for Tasks API
+ * 
+ * These tests run against the actual Express app with a test database.
+ * They test the full request/response cycle including middleware, validation, etc.
+ * 
+ * Note: These tests use a mock auth token. In a real setup, you'd use a test Supabase project.
+ */
+
+import request from 'supertest';
+import app from '../../index.js';
+
+describe('Tasks API Integration Tests', () => {
+  let testTaskId: string;
+  const authHeader = 'Bearer test-token-12345';
+
+  describe('POST /api/tasks', () => {
+    it('should create a new task with valid data', async () => {
+      const response = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', authHeader)
+        .send({
+          title: 'Integration test task',
+          description: 'This is a test description',
+          model_strategy: 'opus-coding',
+          estimated_token_cost: 50000,
+          estimated_dollar_cost: 1.50,
+        })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toMatchObject({
+        title: 'Integration test task',
+        model_strategy: 'opus-coding',
+        status: 'new',
+      });
+      expect(response.body.data.id).toBeDefined();
+
+      testTaskId = response.body.data.id;
+    });
+
+    it('should reject task with missing title', async () => {
+      const response = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', authHeader)
+        .send({
+          model_strategy: 'opus-coding',
+          estimated_token_cost: 50000,
+          estimated_dollar_cost: 1.50,
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('validation');
+    });
+
+    it('should reject task with invalid model_strategy', async () => {
+      const response = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', authHeader)
+        .send({
+          title: 'Test task',
+          model_strategy: 'invalid-strategy',
+          estimated_token_cost: 50000,
+          estimated_dollar_cost: 1.50,
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should reject request without auth token', async () => {
+      await request(app)
+        .post('/api/tasks')
+        .send({
+          title: 'Test task',
+          model_strategy: 'opus-coding',
+          estimated_token_cost: 50000,
+          estimated_dollar_cost: 1.50,
+        })
+        .expect(401);
+    });
+  });
+
+  describe('GET /api/tasks', () => {
+    it('should list all tasks', async () => {
+      const response = await request(app)
+        .get('/api/tasks')
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
+    });
+
+    it('should filter tasks by status', async () => {
+      const response = await request(app)
+        .get('/api/tasks?status=new')
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      response.body.data.forEach((task: any) => {
+        expect(task.status).toBe('new');
+      });
+    });
+
+    it('should filter tasks by assignee', async () => {
+      const response = await request(app)
+        .get('/api/tasks?assignee=rufus')
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      response.body.data.forEach((task: any) => {
+        expect(task.assignee).toBe('rufus');
+      });
+    });
+
+    it('should require authentication', async () => {
+      await request(app)
+        .get('/api/tasks')
+        .expect(401);
+    });
+  });
+
+  describe('GET /api/tasks/:id', () => {
+    it('should get a single task by ID', async () => {
+      const response = await request(app)
+        .get(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.id).toBe(testTaskId);
+    });
+
+    it('should return 404 for non-existent task', async () => {
+      await request(app)
+        .get('/api/tasks/non-existent-id')
+        .set('Authorization', authHeader)
+        .expect(404);
+    });
+  });
+
+  describe('PATCH /api/tasks/:id', () => {
+    it('should update task fields', async () => {
+      const response = await request(app)
+        .patch(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .send({
+          title: 'Updated title',
+          status: 'in-progress',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.title).toBe('Updated title');
+      expect(response.body.data.status).toBe('in-progress');
+    });
+
+    it('should reject invalid status', async () => {
+      await request(app)
+        .patch(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .send({
+          status: 'invalid-status',
+        })
+        .expect(400);
+    });
+
+    it('should return 404 for non-existent task', async () => {
+      await request(app)
+        .patch('/api/tasks/non-existent-id')
+        .set('Authorization', authHeader)
+        .send({
+          title: 'Updated title',
+        })
+        .expect(404);
+    });
+  });
+
+  describe('POST /api/tasks/:id/move', () => {
+    it('should move task to different status', async () => {
+      const response = await request(app)
+        .post(`/api/tasks/${testTaskId}/move`)
+        .set('Authorization', authHeader)
+        .send({
+          status: 'approved',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.status).toBe('approved');
+    });
+
+    it('should set completed_at when moving to complete', async () => {
+      const response = await request(app)
+        .post(`/api/tasks/${testTaskId}/move`)
+        .set('Authorization', authHeader)
+        .send({
+          status: 'complete',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.status).toBe('complete');
+      expect(response.body.data.completed_at).toBeDefined();
+    });
+  });
+
+  describe('DELETE /api/tasks/:id', () => {
+    it('should delete a task', async () => {
+      await request(app)
+        .delete(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      // Verify task is gone
+      await request(app)
+        .get(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .expect(404);
+    });
+
+    it('should return 404 for already deleted task', async () => {
+      await request(app)
+        .delete(`/api/tasks/${testTaskId}`)
+        .set('Authorization', authHeader)
+        .expect(404);
+    });
+  });
+});
+
+describe('Tags API Integration Tests', () => {
+  const authHeader = 'Bearer test-token-12345';
+
+  describe('GET /api/tags', () => {
+    it('should list all tags', async () => {
+      const response = await request(app)
+        .get('/api/tags')
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+    });
+
+    it('should require authentication', async () => {
+      await request(app)
+        .get('/api/tags')
+        .expect(401);
+    });
+  });
+});
+
+describe('Gateway API Integration Tests', () => {
+  const authHeader = 'Bearer test-token-12345';
+
+  describe('GET /api/gateway/health', () => {
+    it('should check gateway health', async () => {
+      const response = await request(app)
+        .get('/api/gateway/health')
+        .set('Authorization', authHeader)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body).toHaveProperty('healthy');
+      expect(response.body).toHaveProperty('timestamp');
+    });
+  });
+});
+
+describe('Health Check', () => {
+  describe('GET /health', () => {
+    it('should return OK without authentication', async () => {
+      const response = await request(app)
+        .get('/health')
+        .expect(200);
+
+      expect(response.body.status).toBe('ok');
+      expect(response.body.timestamp).toBeDefined();
+    });
+  });
+});
+
+describe('Rate Limiting', () => {
+  const authHeader = 'Bearer test-token-12345';
+
+  it('should rate limit after 100 requests', async () => {
+    // Note: This test is slow and may be skipped in CI
+    const requests = Array.from({ length: 101 }, () => 
+      request(app)
+        .get('/api/tasks')
+        .set('Authorization', authHeader)
+    );
+
+    const responses = await Promise.all(requests);
+    const rateLimited = responses.filter(r => r.status === 429);
+
+    expect(rateLimited.length).toBeGreaterThan(0);
+  }, 30000); // 30 second timeout
+});
