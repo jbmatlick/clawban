@@ -13,7 +13,9 @@
     "lint": "eslint src --max-warnings 0",
     "format": "prettier --write \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "migrate:assignee": "tsx src/migrate-assignee.ts"
+    "migrate:assignee": "tsx src/migrate-assignee.ts",
+    "audit:routes": "tsx scripts/audit-routes.ts",
+    "precommit": "npm run lint && npm run typecheck && npm run audit:routes && npm test"
   },
   "keywords": [
     "api",
