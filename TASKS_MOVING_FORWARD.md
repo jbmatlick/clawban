@@ -59,7 +59,7 @@
 **Estimated:** 2 hours
 
 **Description:**  
-Send James a daily digest via Telegram each morning (8 AM HST) with:
+Send James a daily digest via Telegram each morning (6 AM HST) with:
 - Tasks assigned to James (status breakdown)
 - Tasks Rufus completed yesterday
 - Tasks Rufus is working on today
