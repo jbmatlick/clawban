@@ -46,15 +46,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 /**
- * List all tasks with optional assignee filter
+ * List all tasks with optional filters
  */
-export async function listTasks(assignee?: TaskAssignee): Promise<ListTasksResponse> {
+export async function listTasks(
+  assignee?: TaskAssignee,
+  tag?: string
+): Promise<ListTasksResponse> {
   const headers = await getAuthHeaders();
   
   // Build query string
   const params = new URLSearchParams();
   if (assignee !== undefined) {
     params.append('assignee', assignee === null ? 'null' : assignee);
+  }
+  if (tag) {
+    params.append('tag', tag);
   }
   
   const query = params.toString() ? `?${params.toString()}` : '';

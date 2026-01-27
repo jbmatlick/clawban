@@ -12,17 +12,17 @@ import type {
 import * as api from './client';
 
 const QUERY_KEYS = {
-  tasks: (assignee?: TaskAssignee) => ['tasks', assignee] as const,
+  tasks: (assignee?: TaskAssignee, tag?: string) => ['tasks', assignee, tag] as const,
   task: (id: string) => ['tasks', id] as const,
 };
 
 /**
- * Hook to fetch all tasks with optional assignee filter
+ * Hook to fetch all tasks with optional filters
  */
-export function useTasks(assignee?: TaskAssignee) {
+export function useTasks(assignee?: TaskAssignee, tag?: string) {
   return useQuery({
-    queryKey: QUERY_KEYS.tasks(assignee),
-    queryFn: () => api.listTasks(assignee),
+    queryKey: QUERY_KEYS.tasks(assignee, tag),
+    queryFn: () => api.listTasks(assignee, tag),
   });
 }
 
