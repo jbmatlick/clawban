@@ -6,6 +6,7 @@ import { Trash2, DollarSign, Cpu } from 'lucide-react';
 import type { Task } from '../../../contracts/types';
 import { cn } from '../utils/cn';
 import { useDeleteTask } from '../api/hooks';
+import { TagBadge } from './TagBadge';
 
 interface TaskCardProps {
   task: Task;
@@ -62,6 +63,15 @@ export function TaskCard({ task }: TaskCardProps) {
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {task.tags.map((tag) => (
+            <TagBadge key={tag} name={tag} />
+          ))}
+        </div>
+      )}
 
       {/* Description */}
       <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{task.description}</p>
