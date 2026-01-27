@@ -7,21 +7,22 @@ import type {
   CreateTaskRequest,
   UpdateTaskRequest,
   MoveTaskRequest,
+  TaskAssignee,
 } from '../../../contracts/types';
 import * as api from './client';
 
 const QUERY_KEYS = {
-  tasks: ['tasks'] as const,
+  tasks: (assignee?: TaskAssignee) => ['tasks', assignee] as const,
   task: (id: string) => ['tasks', id] as const,
 };
 
 /**
- * Hook to fetch all tasks
+ * Hook to fetch all tasks with optional assignee filter
  */
-export function useTasks() {
+export function useTasks(assignee?: TaskAssignee) {
   return useQuery({
-    queryKey: QUERY_KEYS.tasks,
-    queryFn: api.listTasks,
+    queryKey: QUERY_KEYS.tasks(assignee),
+    queryFn: () => api.listTasks(assignee),
   });
 }
 

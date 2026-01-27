@@ -9,6 +9,7 @@ import type {
   MoveTaskRequest,
   ApiResponse,
   ListTasksResponse,
+  TaskAssignee,
 } from '../../../contracts/types';
 import { supabase } from '../lib/supabase';
 
@@ -45,11 +46,19 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 /**
- * List all tasks
+ * List all tasks with optional assignee filter
  */
-export async function listTasks(): Promise<ListTasksResponse> {
+export async function listTasks(assignee?: TaskAssignee): Promise<ListTasksResponse> {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_BASE}/api/tasks`, { headers });
+  
+  // Build query string
+  const params = new URLSearchParams();
+  if (assignee !== undefined) {
+    params.append('assignee', assignee === null ? 'null' : assignee);
+  }
+  
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE}/api/tasks${query}`, { headers });
   return handleResponse<ListTasksResponse>(response);
 }
 

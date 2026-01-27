@@ -23,6 +23,7 @@ export function CreateTaskForm() {
     model_strategy: 'sonnet-coding',
     estimated_token_cost: 0,
     estimated_dollar_cost: 0,
+    assignee: null,
   });
 
   const createTask = useCreateTask();
@@ -38,6 +39,7 @@ export function CreateTaskForm() {
           model_strategy: 'sonnet-coding',
           estimated_token_cost: 0,
           estimated_dollar_cost: 0,
+          assignee: null,
         });
         setIsOpen(false);
       },
@@ -118,6 +120,25 @@ export function CreateTaskForm() {
                 {strategy.label}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Assignee */}
+        <div>
+          <label htmlFor="assignee" className="block text-sm font-medium mb-1">
+            Assign To
+          </label>
+          <select
+            id="assignee"
+            value={formData.assignee || ''}
+            onChange={(e) =>
+              setFormData({ ...formData, assignee: (e.target.value || null) as any })
+            }
+            className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Unassigned</option>
+            <option value="rufus">🤖 Rufus (AI Assistant)</option>
+            <option value="james">👤 James</option>
           </select>
         </div>
 

@@ -39,7 +39,21 @@ export function TaskCard({ task }: TaskCardProps) {
     <div className="bg-card rounded-lg border border-border p-4 shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="font-medium text-card-foreground line-clamp-2">{task.title}</h3>
+        <div className="flex-1">
+          <h3 className="font-medium text-card-foreground line-clamp-2 mb-1">{task.title}</h3>
+          {task.assignee && (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium',
+                task.assignee === 'rufus'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'bg-purple-50 text-purple-700'
+              )}
+            >
+              {task.assignee === 'rufus' ? '🤖 Rufus' : '👤 James'}
+            </span>
+          )}
+        </div>
         <button
           onClick={handleDelete}
           className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
