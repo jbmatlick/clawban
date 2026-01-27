@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { KanbanBoard } from './components/KanbanBoard';
 import { CreateTaskForm } from './components/CreateTaskForm';
 import { LoginPage } from './components/LoginPage';
+import { HealthStatus } from './components/HealthStatus';
+import { Toaster } from 'sonner';
 import { Loader2, LogOut } from 'lucide-react';
 
 const queryClient = new QueryClient({
@@ -47,6 +49,7 @@ function AppContent() {
               <p className="text-sm text-muted-foreground">AI Task Management Platform</p>
             </div>
             <div className="flex items-center gap-4">
+              <HealthStatus />
               <CreateTaskForm />
               <button
                 onClick={() => signOut()}
@@ -74,6 +77,7 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <AppContent />
+        <Toaster position="top-right" />
       </QueryClientProvider>
     </AuthProvider>
   );

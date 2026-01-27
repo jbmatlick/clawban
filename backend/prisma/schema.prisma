@@ -1,0 +1,47 @@
+// Prisma schema for Clawban
+// Database: Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Task {
+  id                     String    @id @default(uuid()) @db.Uuid
+  title                  String    @db.VarChar(200)
+  description            String    @db.Text
+  modelStrategy          String    @map("model_strategy") @db.VarChar(50)
+  estimatedTokenCost     Int       @default(0) @map("estimated_token_cost")
+  estimatedDollarCost    Decimal   @default(0.00) @map("estimated_dollar_cost") @db.Decimal(10, 2)
+  status                 String    @default("new") @db.VarChar(20)
+  assignee               String?   @db.VarChar(20)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  completedAt            DateTime? @map("completed_at") @db.Timestamptz(6)
+  
+  llmUsage               LLMUsage[]
+  
+  @@index([status])
+  @@index([assignee])
+  @@index([createdAt(sort: Desc)])
+  @@map("tasks")
+}
+
+model LLMUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  model     String   @db.VarChar(100)
+  tokensIn  Int      @map("tokens_in")
+  tokensOut Int      @map("tokens_out")
+  cost      Decimal  @db.Decimal(10, 6)
+  timestamp DateTime @default(now()) @db.Timestamptz(6)
+  
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@index([taskId])
+  @@index([timestamp(sort: Desc)])
+  @@map("llm_usage")
+}

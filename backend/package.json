@@ -23,6 +23,7 @@
   "author": "James Matlick",
   "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^7.3.0",
     "@supabase/supabase-js": "^2.93.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -31,6 +32,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "nanoid": "^5.0.9",
+    "prisma": "^7.3.0",
     "proper-lockfile": "^4.1.2",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0",

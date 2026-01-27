@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { nanoid } from 'nanoid';
 import taskRoutes from './routes/task.routes.js';
+import gatewayRoutes from './routes/gateway.routes.js';
 import { requireAuth } from './middleware/api-key-auth.js';
 import { logger } from './lib/logger.js';
 
@@ -79,6 +80,7 @@ app.get('/health', (_req, res) => {
 
 // Protected API routes
 app.use('/api/tasks', requireAuth, taskRoutes);
+app.use('/api/gateway', requireAuth, gatewayRoutes);
 
 // 404 handler
 app.use((_req, res) => {
