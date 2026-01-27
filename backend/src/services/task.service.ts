@@ -10,6 +10,7 @@ import type {
   TaskStatus,
 } from '../../../contracts/types.js';
 import { readData, writeData, withLock } from './storage.service.js';
+import { ensureTagsExist } from './tag.service.js';
 
 interface TasksData {
   tasks: Task[];
@@ -44,6 +45,9 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
   return withLock(async () => {
     const data = await readData<TasksData>();
 
+    // Ensure tags exist and get normalized names
+    const tags = request.tags ? await ensureTagsExist(request.tags) : [];
+
     const newTask: Task = {
       id: nanoid(),
       title: request.title,
@@ -53,6 +57,7 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
       estimated_dollar_cost: request.estimated_dollar_cost || 0,
       status: 'new',
       assignee: request.assignee || null,
+      tags,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       completed_at: null,
@@ -78,9 +83,13 @@ export async function updateTask(id: string, request: UpdateTaskRequest): Promis
       return null;
     }
 
+    // Ensure tags exist and get normalized names if tags are being updated
+    const tags = request.tags ? await ensureTagsExist(request.tags) : data.tasks[taskIndex].tags;
+
     const updatedTask: Task = {
       ...data.tasks[taskIndex],
       ...request,
+      tags,
       updated_at: new Date().toISOString(),
       // Set completed_at if status changed to complete
       completed_at:

@@ -19,6 +19,14 @@ export type TaskStatus = 'new' | 'approved' | 'in-progress' | 'complete';
 export type TaskAssignee = 'rufus' | 'james' | null;
 
 /**
+ * Tag for categorizing tasks
+ */
+export interface Tag {
+  name: string;
+  color: string; // hex color, auto-generated
+}
+
+/**
  * LLM usage entry for tracking costs
  */
 export interface LLMUsage {
@@ -41,6 +49,7 @@ export interface Task {
   estimated_dollar_cost: number;
   status: TaskStatus;
   assignee: TaskAssignee;
+  tags: string[]; // array of tag names
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -57,6 +66,7 @@ export interface CreateTaskRequest {
   estimated_token_cost?: number;
   estimated_dollar_cost?: number;
   assignee?: TaskAssignee;
+  tags?: string[]; // array of tag names
 }
 
 /**
@@ -70,6 +80,7 @@ export interface UpdateTaskRequest {
   estimated_dollar_cost?: number;
   status?: TaskStatus;
   assignee?: TaskAssignee;
+  tags?: string[]; // array of tag names
 }
 
 /**
