@@ -11,7 +11,10 @@ import lockfile from 'proper-lockfile';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, '../../data');
+// Use environment variable or fallback to relative path
+// In production (Railway), DATA_DIR should be /app/backend/data (mounted volume)
+// In development, it's relative to the compiled code location
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../../../data');
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
 
 /**
