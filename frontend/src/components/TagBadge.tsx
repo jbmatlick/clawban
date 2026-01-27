@@ -5,19 +5,26 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { Tag } from '../../../contracts/types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface TagBadgeProps {
   name: string;
 }
 
 export function TagBadge({ name }: TagBadgeProps) {
+  const { session } = useAuth();
+
   // Fetch all tags to get the color for this tag
   const { data: tagsResponse } = useQuery<{ success: boolean; data: Tag[] }>({
     queryKey: ['tags'],
     queryFn: async () => {
+      if (!session?.access_token) {
+        throw new Error('No session');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tags`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
       
@@ -28,6 +35,7 @@ export function TagBadge({ name }: TagBadgeProps) {
       return response.json();
     },
     staleTime: 60000, // Cache for 1 minute
+    enabled: !!session?.access_token,
   });
 
   const tag = tagsResponse?.data?.find(t => t.name === name);

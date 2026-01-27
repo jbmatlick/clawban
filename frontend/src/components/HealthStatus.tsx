@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HealthResponse {
   success: boolean;
@@ -17,14 +18,19 @@ interface HealthResponse {
 
 export function HealthStatus() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   // Check health every 10 seconds
   const { data: health, isLoading } = useQuery<HealthResponse>({
     queryKey: ['gateway-health'],
     queryFn: async () => {
+      if (!session?.access_token) {
+        throw new Error('No session');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gateway/health`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
       
@@ -36,15 +42,20 @@ export function HealthStatus() {
     },
     refetchInterval: 10000, // Check every 10 seconds
     retry: false,
+    enabled: !!session?.access_token,
   });
 
   // Restart mutation
   const restartMutation = useMutation({
     mutationFn: async () => {
+      if (!session?.access_token) {
+        throw new Error('No session');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gateway/restart`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
       
