@@ -34,11 +34,11 @@ function extractApiKey(req: Request): string | null {
  * Middleware to verify API key for agent access
  * Checks X-API-Key header against AGENT_API_KEY env var
  */
-export async function requireApiKey(
+export function requireApiKey(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): void {
   const apiKey = extractApiKey(req);
   const validApiKey = process.env.AGENT_API_KEY;
 

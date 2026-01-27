@@ -23,9 +23,24 @@ const PORT = process.env.PORT || 3001;
 // Trust Railway proxy for rate limiting
 app.set('trust proxy', 1);
 
-// Security: Helmet for HTTP headers
+// Security: Helmet for HTTP headers with strict CSP
 app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Needed for some UI libraries
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+    },
+  },
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 // Security: Rate limiting (100 requests per 15 minutes)
@@ -49,8 +64,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Security: Request size limits
-app.use(express.json({ limit: '1mb' }));
+// Security: Request size limits (prevent memory exhaustion attacks)
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ limit: '100kb', extended: true }));
 
 // Request ID and logging middleware
 app.use((req, res, next) => {
@@ -68,7 +84,7 @@ app.use((req, res, next) => {
       path: req.path,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
-      userId: (req as any).user?.id,
+      userId: (req as Record<string, unknown>).user as string | undefined,
       ip: req.ip,
     });
   });
@@ -100,7 +116,7 @@ app.use((_req, res) => {
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', {
-    requestId: (req as any).requestId,
+    requestId: req.requestId as string,
     error: err.message,
     stack: err.stack,
     path: req.path,

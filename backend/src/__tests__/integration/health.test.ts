@@ -21,7 +21,7 @@ describe('Health Check', () => {
       .get('/health')
       .expect(200);
 
-    const timestamp = new Date(response.body.timestamp);
+    const timestamp = new Date(response.body.timestamp as string);
     expect(timestamp.toString()).not.toBe('Invalid Date');
     
     // Should be recent (within last minute)
@@ -37,8 +37,8 @@ describe('404 Handling', () => {
       .get('/does-not-exist')
       .expect(404);
 
-    expect(response.body.success).toBe(false);
-    expect(response.body.error).toContain('Not found');
+    expect(response.body.success as boolean).toBe(false);
+    expect(response.body.error as string).toContain('Not found');
   });
 });
 
