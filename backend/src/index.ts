@@ -9,11 +9,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { nanoid } from 'nanoid';
+import swaggerUi from 'swagger-ui-express';
 import taskRoutes from './routes/task.routes.js';
 import gatewayRoutes from './routes/gateway.routes.js';
 import tagRoutes from './routes/tag.routes.js';
 import { requireAuth } from './middleware/api-key-auth.js';
 import { logger } from './lib/logger.js';
+import { openApiSpec } from './openapi.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -73,6 +75,9 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// API documentation (public)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // Health check (public - no auth required)
 app.get('/health', (_req, res) => {

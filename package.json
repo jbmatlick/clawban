@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "cd backend && npm start",
-    "build": "cd backend && npm install && npm run build"
+    "build": "cd backend && npm install && npm run build",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18.0.0"
