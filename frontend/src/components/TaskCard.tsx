@@ -2,11 +2,13 @@
  * Task card component for Kanban board
  */
 
+import { useState } from 'react';
 import { Trash2, DollarSign, Cpu } from 'lucide-react';
 import type { Task } from '../../../contracts/types';
 import { cn } from '../utils/cn';
 import { useDeleteTask } from '../api/hooks';
 import { TagBadge } from './TagBadge';
+import { EditTaskModal } from './EditTaskModal';
 
 interface TaskCardProps {
   task: Task;
@@ -27,6 +29,7 @@ const MODEL_STRATEGY_COLORS: Record<Task['model_strategy'], string> = {
 };
 
 export function TaskCard({ task }: TaskCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const deleteTask = useDeleteTask();
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -36,8 +39,16 @@ export function TaskCard({ task }: TaskCardProps) {
     }
   };
 
+  const handleClick = () => {
+    setIsEditing(true);
+  };
+
   return (
-    <div className="bg-card rounded-lg border border-border p-4 shadow-sm hover:shadow-md transition-shadow">
+    <>
+      <div 
+        onClick={handleClick}
+        className="bg-card rounded-lg border border-border p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1">
@@ -107,5 +118,11 @@ export function TaskCard({ task }: TaskCardProps) {
         </div>
       )}
     </div>
+
+      {/* Edit Modal */}
+      {isEditing && (
+        <EditTaskModal task={task} onClose={() => setIsEditing(false)} />
+      )}
+    </>
   );
 }
