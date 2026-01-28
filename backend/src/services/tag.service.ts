@@ -7,6 +7,13 @@ import type { Tag } from '../../../contracts/types.js';
 import { supabase } from '../lib/supabase.js';
 import { nanoid } from 'nanoid';
 
+interface TagRow {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
 /**
  * Generate a consistent color for a tag name
  * Uses hash of name to pick from a predefined palette
@@ -51,14 +58,15 @@ export async function getOrCreateTag(name: string): Promise<Tag> {
   const normalizedName = name.trim().toLowerCase();
 
   // Try to get existing tag
-  const { data: existing } = await supabase
+  const existingResult = await supabase
     .from('tags')
     .select('*')
     .eq('name', normalizedName)
     .single();
 
-  if (existing) {
-    return { name: existing.name, color: existing.color };
+  if (existingResult.data) {
+    const row = existingResult.data as TagRow;
+    return { name: row.name, color: row.color };
   }
 
   // Create new tag with auto-generated color
@@ -68,30 +76,32 @@ export async function getOrCreateTag(name: string): Promise<Tag> {
     color: generateTagColor(normalizedName),
   };
 
-  const { data, error } = await supabase
+  const insertResult = await supabase
     .from('tags')
     .insert(newTag)
     .select()
     .single();
 
-  if (error) {
+  if (insertResult.error) {
     // Handle race condition - tag might have been created by another request
-    if (error.code === '23505') { // unique violation
-      const { data: existing } = await supabase
+    if (insertResult.error.code === '23505') { // unique violation
+      const retryResult = await supabase
         .from('tags')
         .select('*')
         .eq('name', normalizedName)
         .single();
       
-      if (existing) {
-        return { name: existing.name, color: existing.color };
+      if (retryResult.data) {
+        const row = retryResult.data as TagRow;
+        return { name: row.name, color: row.color };
       }
     }
-    console.error('Supabase tag insert error:', error);
-    throw new Error(`Failed to create tag: ${error.message}`);
+    console.error('Supabase tag insert error:', insertResult.error);
+    throw new Error(`Failed to create tag: ${insertResult.error.message}`);
   }
 
-  return { name: data.name, color: data.color };
+  const row = insertResult.data as TagRow;
+  return { name: row.name, color: row.color };
 }
 
 /**
@@ -112,7 +122,7 @@ export async function getAllTags(): Promise<Tag[]> {
     throw new Error(`Failed to get tags: ${error.message}`);
   }
 
-  return data || [];
+  return (data as Tag[]) || [];
 }
 
 /**

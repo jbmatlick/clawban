@@ -35,7 +35,7 @@ export async function readData<T>(): Promise<T> {
     throw new Error(`Failed to read tasks: ${error.message}`);
   }
 
-  return { tasks: data || [] } as T;
+  return { tasks: (data as Task[]) || [] } as T;
 }
 
 /**
@@ -79,18 +79,18 @@ export async function insertTask(task: Task): Promise<Task> {
     throw new Error('Supabase not configured');
   }
 
-  const { data, error } = await supabase
+  const result = await supabase
     .from('tasks')
     .insert(task)
     .select()
     .single();
 
-  if (error) {
-    console.error('Supabase insert error:', error);
-    throw new Error(`Failed to insert task: ${error.message}`);
+  if (result.error) {
+    console.error('Supabase insert error:', result.error);
+    throw new Error(`Failed to insert task: ${result.error.message}`);
   }
 
-  return data;
+  return result.data as Task;
 }
 
 /**
@@ -101,22 +101,22 @@ export async function updateTaskById(id: string, updates: Partial<Task>): Promis
     throw new Error('Supabase not configured');
   }
 
-  const { data, error } = await supabase
+  const result = await supabase
     .from('tasks')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
+  if (result.error) {
+    if (result.error.code === 'PGRST116') {
       return null; // Not found
     }
-    console.error('Supabase update error:', error);
-    throw new Error(`Failed to update task: ${error.message}`);
+    console.error('Supabase update error:', result.error);
+    throw new Error(`Failed to update task: ${result.error.message}`);
   }
 
-  return data;
+  return result.data as Task;
 }
 
 /**
@@ -148,21 +148,21 @@ export async function getTaskById(id: string): Promise<Task | null> {
     throw new Error('Supabase not configured');
   }
 
-  const { data, error } = await supabase
+  const result = await supabase
     .from('tasks')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
+  if (result.error) {
+    if (result.error.code === 'PGRST116') {
       return null; // Not found
     }
-    console.error('Supabase read error:', error);
-    throw new Error(`Failed to get task: ${error.message}`);
+    console.error('Supabase read error:', result.error);
+    throw new Error(`Failed to get task: ${result.error.message}`);
   }
 
-  return data;
+  return result.data as Task;
 }
 
 /**
