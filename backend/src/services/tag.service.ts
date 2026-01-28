@@ -1,14 +1,11 @@
 /**
  * Tag service - Auto-generate colors and manage tag registry
+ * Uses Supabase for persistence
  */
 
 import type { Tag } from '../../../contracts/types.js';
-import { readData, writeData, withLock } from './storage.service.js';
-
-interface AppData {
-  tasks: any[];
-  tags: Record<string, Tag>; // tag name -> Tag
-}
+import { supabase } from '../lib/supabase.js';
+import { nanoid } from 'nanoid';
 
 /**
  * Generate a consistent color for a tag name
@@ -47,43 +44,75 @@ function generateTagColor(name: string): string {
  * If tag doesn't exist, create with auto-generated color
  */
 export async function getOrCreateTag(name: string): Promise<Tag> {
-  return withLock(async () => {
-    const data = await readData<AppData>();
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
 
-    if (!data.tags) {
-      data.tags = {};
+  const normalizedName = name.trim().toLowerCase();
+
+  // Try to get existing tag
+  const { data: existing } = await supabase
+    .from('tags')
+    .select('*')
+    .eq('name', normalizedName)
+    .single();
+
+  if (existing) {
+    return { name: existing.name, color: existing.color };
+  }
+
+  // Create new tag with auto-generated color
+  const newTag = {
+    id: nanoid(),
+    name: normalizedName,
+    color: generateTagColor(normalizedName),
+  };
+
+  const { data, error } = await supabase
+    .from('tags')
+    .insert(newTag)
+    .select()
+    .single();
+
+  if (error) {
+    // Handle race condition - tag might have been created by another request
+    if (error.code === '23505') { // unique violation
+      const { data: existing } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('name', normalizedName)
+        .single();
+      
+      if (existing) {
+        return { name: existing.name, color: existing.color };
+      }
     }
+    console.error('Supabase tag insert error:', error);
+    throw new Error(`Failed to create tag: ${error.message}`);
+  }
 
-    const normalizedName = name.trim().toLowerCase();
-
-    if (data.tags[normalizedName]) {
-      return data.tags[normalizedName];
-    }
-
-    // Create new tag with auto-generated color
-    const newTag: Tag = {
-      name: normalizedName,
-      color: generateTagColor(normalizedName),
-    };
-
-    data.tags[normalizedName] = newTag;
-    await writeData(data);
-
-    return newTag;
-  });
+  return { name: data.name, color: data.color };
 }
 
 /**
  * Get all tags
  */
 export async function getAllTags(): Promise<Tag[]> {
-  const data = await readData<AppData>();
-  
-  if (!data.tags) {
-    return [];
+  if (!supabase) {
+    throw new Error('Supabase not configured');
   }
 
-  return Object.values(data.tags);
+  const { data, error } = await supabase
+    .from('tags')
+    .select('name, color')
+    .order('name');
+
+  if (error) {
+    console.error('Supabase tags read error:', error);
+    throw new Error(`Failed to get tags: ${error.message}`);
+  }
+
+  return data || [];
 }
 
 /**

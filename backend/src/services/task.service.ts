@@ -1,5 +1,6 @@
 /**
  * Task service - Business logic for task management
+ * Uses Supabase for persistence
  */
 
 import { nanoid } from 'nanoid';
@@ -9,7 +10,7 @@ import type {
   UpdateTaskRequest,
   TaskStatus,
 } from '../../../contracts/types.js';
-import { readData, writeData, withLock } from './storage.service.js';
+import * as storage from './supabase-storage.service.js';
 import { ensureTagsExist } from './tag.service.js';
 
 interface TasksData {
@@ -19,120 +20,94 @@ interface TasksData {
 /**
  * Get all tasks with optional filtering
  */
-export async function getAllTasks(assignee?: string | null): Promise<Task[]> {
-  const data = await readData<TasksData>();
+export async function getAllTasks(assignee?: string | null, tag?: string): Promise<Task[]> {
+  const data = await storage.readData<TasksData>();
   
-  // Ensure all tasks have tags field (migration from old data)
-  const tasks = data.tasks.map(task => ({
+  let tasks = data.tasks.map(task => ({
     ...task,
     tags: task.tags || [],
   }));
   
-  if (assignee === undefined) {
-    return tasks;
+  // Filter by assignee if specified
+  if (assignee !== undefined) {
+    tasks = tasks.filter(task => task.assignee === assignee);
   }
   
-  // Filter by assignee (including null)
-  return tasks.filter(task => task.assignee === assignee);
+  // Filter by tag if specified
+  if (tag) {
+    tasks = tasks.filter(task => task.tags?.includes(tag));
+  }
+  
+  return tasks;
 }
 
 /**
  * Get task by ID
  */
 export async function getTaskById(id: string): Promise<Task | null> {
-  const data = await readData<TasksData>();
-  return data.tasks.find((task) => task.id === id) || null;
+  return storage.getTaskById(id);
 }
 
 /**
  * Create a new task
  */
 export async function createTask(request: CreateTaskRequest): Promise<Task> {
-  return withLock(async () => {
-    const data = await readData<TasksData>();
+  // Ensure tags exist and get normalized names
+  const tags = request.tags ? await ensureTagsExist(request.tags) : [];
 
-    // Ensure tags exist and get normalized names
-    const tags = request.tags ? await ensureTagsExist(request.tags) : [];
+  const newTask: Task = {
+    id: nanoid(),
+    title: request.title,
+    description: request.description,
+    model_strategy: request.model_strategy,
+    estimated_token_cost: request.estimated_token_cost || 0,
+    estimated_dollar_cost: request.estimated_dollar_cost || 0,
+    status: 'new',
+    assignee: request.assignee || null,
+    tags,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    completed_at: null,
+    llm_usage: [],
+  };
 
-    const newTask: Task = {
-      id: nanoid(),
-      title: request.title,
-      description: request.description,
-      model_strategy: request.model_strategy,
-      estimated_token_cost: request.estimated_token_cost || 0,
-      estimated_dollar_cost: request.estimated_dollar_cost || 0,
-      status: 'new',
-      assignee: request.assignee || null,
-      tags,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      completed_at: null,
-      llm_usage: [],
-    };
-
-    data.tasks.push(newTask);
-    await writeData(data);
-
-    return newTask;
-  });
+  return storage.insertTask(newTask);
 }
 
 /**
  * Update an existing task
  */
 export async function updateTask(id: string, request: UpdateTaskRequest): Promise<Task | null> {
-  return withLock(async () => {
-    const data = await readData<TasksData>();
-    const taskIndex = data.tasks.findIndex((task) => task.id === id);
+  const existingTask = await storage.getTaskById(id);
+  
+  if (!existingTask) {
+    return null;
+  }
 
-    if (taskIndex === -1) {
-      return null;
-    }
+  // Ensure tags exist and get normalized names if tags are being updated
+  const tags = request.tags 
+    ? await ensureTagsExist(request.tags) 
+    : (existingTask.tags || []);
 
-    const existingTask = data.tasks[taskIndex];
-    
-    // Ensure tags exist and get normalized names if tags are being updated
-    // Default to empty array if tags field doesn't exist (migration from old data)
-    const tags = request.tags 
-      ? await ensureTagsExist(request.tags) 
-      : (existingTask.tags || []);
+  const updates: Partial<Task> = {
+    ...request,
+    tags,
+    updated_at: new Date().toISOString(),
+  };
 
-    const updatedTask: Task = {
-      ...existingTask,
-      ...request,
-      tags,
-      updated_at: new Date().toISOString(),
-      // Set completed_at if status changed to complete
-      completed_at:
-        request.status === 'complete' && existingTask.status !== 'complete'
-          ? new Date().toISOString()
-          : existingTask.completed_at,
-    };
+  // Set completed_at if status changed to complete
+  if (request.status === 'complete' && existingTask.status !== 'complete') {
+    updates.completed_at = new Date().toISOString();
+  }
 
-    data.tasks[taskIndex] = updatedTask;
-    await writeData(data);
-
-    return updatedTask;
-  });
+  return storage.updateTaskById(id, updates);
 }
 
 /**
  * Delete a task
  */
 export async function deleteTask(id: string): Promise<boolean> {
-  return withLock(async () => {
-    const data = await readData<TasksData>();
-    const initialLength = data.tasks.length;
-
-    data.tasks = data.tasks.filter((task) => task.id !== id);
-
-    if (data.tasks.length === initialLength) {
-      return false;
-    }
-
-    await writeData(data);
-    return true;
-  });
+  return storage.deleteTaskById(id);
 }
 
 /**

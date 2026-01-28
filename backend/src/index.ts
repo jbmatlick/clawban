@@ -84,7 +84,7 @@ app.use((req, res, next) => {
       path: req.path,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
-      userId: (req as Record<string, unknown>).user as string | undefined,
+      userId: (req as unknown as Record<string, unknown>).user as string | undefined,
       ip: req.ip,
     });
   });
@@ -97,7 +97,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // Health check (public - no auth required)
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+  });
 });
 
 // Protected API routes

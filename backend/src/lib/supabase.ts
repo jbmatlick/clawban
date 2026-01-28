@@ -11,8 +11,15 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('⚠️ Supabase credentials not configured - auth will be disabled');
 }
 
-export const supabase = supabaseUrl && supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey)
-  : null;
+export const supabase = createClientIfAvailable(supabaseUrl, supabaseServiceKey);
+
+function createClientIfAvailable(url: string | undefined, key: string | undefined) {
+  if (!url || !key) {
+    console.warn('⚠️ Supabase credentials not configured - auth will be disabled');
+    return null;
+  }
+  return createClient(url, key);
+}
+
 
 export const isAuthEnabled = !!supabase;
