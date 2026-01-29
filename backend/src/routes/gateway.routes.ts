@@ -2,7 +2,7 @@
  * Gateway health and control routes
  */
 
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -11,10 +11,29 @@ const router = Router();
 const GATEWAY_URL = process.env.CLAWDBOT_GATEWAY_URL || 'http://localhost:18789';
 const GATEWAY_TOKEN = process.env.CLAWDBOT_GATEWAY_TOKEN || '826cb777240bfb3daaa716cf13c5d65e06abba3775eadd05';
 
+// Type definitions
+interface GatewayResponse {
+  jsonrpc: string;
+  id: number;
+  result?: {
+    ok?: boolean;
+    [key: string]: unknown;
+  };
+  error?: {
+    message?: string;
+    code?: number;
+  };
+}
+
+interface RequestWithMeta extends Request {
+  requestId?: string;
+  user?: { id: string };
+}
+
 /**
  * Call Clawdbot gateway API
  */
-async function callGateway(method: string, params: Record<string, any> = {}) {
+async function callGateway(method: string, params: Record<string, unknown> = {}): Promise<GatewayResponse['result']> {
   const response = await fetch(`${GATEWAY_URL}/api/v1/call`, {
     method: 'POST',
     headers: {
@@ -33,7 +52,7 @@ async function callGateway(method: string, params: Record<string, any> = {}) {
     throw new Error(`Gateway HTTP ${response.status}`);
   }
 
-  const data = await response.json() as any;
+  const data = await response.json() as GatewayResponse;
   
   if (data.error) {
     throw new Error(data.error.message || 'Gateway error');
@@ -46,7 +65,8 @@ async function callGateway(method: string, params: Record<string, any> = {}) {
  * GET /api/gateway/health
  * Check Clawdbot gateway health
  */
-router.get('/health', async (req, res) => {
+router.get('/health', async (req: Request, res: Response) => {
+  const reqWithMeta = req as RequestWithMeta;
   try {
     const result = await callGateway('health');
     
@@ -60,7 +80,7 @@ router.get('/health', async (req, res) => {
     });
   } catch (error) {
     logger.error('Gateway health check failed', {
-      requestId: (req as any).requestId,
+      requestId: reqWithMeta.requestId,
       error: error instanceof Error ? error.message : String(error),
     });
 
@@ -78,7 +98,8 @@ router.get('/health', async (req, res) => {
  * POST /api/gateway/restart
  * Restart Clawdbot gateway
  */
-router.post('/restart', async (req, res) => {
+router.post('/restart', async (req: Request, res: Response) => {
+  const reqWithMeta = req as RequestWithMeta;
   try {
     await callGateway('gateway.restart', {
       reason: 'Manual restart via Clawban UI',
@@ -86,8 +107,8 @@ router.post('/restart', async (req, res) => {
     });
 
     logger.info('Gateway restart initiated', {
-      requestId: (req as any).requestId,
-      userId: (req as any).user?.id,
+      requestId: reqWithMeta.requestId,
+      userId: reqWithMeta.user?.id,
     });
 
     res.json({
@@ -97,7 +118,7 @@ router.post('/restart', async (req, res) => {
     });
   } catch (error) {
     logger.error('Gateway restart failed', {
-      requestId: (req as any).requestId,
+      requestId: reqWithMeta.requestId,
       error: error instanceof Error ? error.message : String(error),
     });
 

@@ -32,7 +32,7 @@ export const createTaskValidators = [
     .withMessage('Estimated dollar cost must be a positive number'),
   body('assignee')
     .optional()
-    .custom((value) => TASK_ASSIGNEES.includes(value))
+    .custom((value: string | null) => TASK_ASSIGNEES.includes(value))
     .withMessage(`Assignee must be one of: ${TASK_ASSIGNEES.filter(a => a !== null).join(', ')} or null`),
 ];
 
@@ -67,7 +67,7 @@ export const updateTaskValidators = [
     .withMessage(`Status must be one of: ${TASK_STATUSES.join(', ')}`),
   body('assignee')
     .optional()
-    .custom((value) => TASK_ASSIGNEES.includes(value))
+    .custom((value: string | null) => TASK_ASSIGNEES.includes(value))
     .withMessage(`Assignee must be one of: ${TASK_ASSIGNEES.filter(a => a !== null).join(', ')} or null`),
 ];
 

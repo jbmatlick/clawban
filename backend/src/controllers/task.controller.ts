@@ -11,23 +11,30 @@ import type {
   ApiResponse,
   ListTasksResponse,
   Task,
+  BoardType,
 } from '../../../contracts/types.js';
 import * as taskService from '../services/task.service.js';
 
 /**
- * List all tasks with optional assignee filter
- * Query param: ?assignee=rufus or ?assignee=james or ?assignee=null
+ * List all tasks with optional filters
+ * Query params: 
+ *   ?assignee=rufus or ?assignee=james or ?assignee=null
+ *   ?board=work or ?board=personal
+ *   ?tag=security
  */
 export async function listTasks(req: Request, res: Response): Promise<void> {
   try {
     const assigneeParam = req.query.assignee as string | undefined;
+    const boardParam = req.query.board as BoardType | undefined;
+    const tagParam = req.query.tag as string | undefined;
+    
     let assigneeFilter: string | null | undefined = undefined;
     
     if (assigneeParam !== undefined) {
       assigneeFilter = assigneeParam === 'null' ? null : assigneeParam;
     }
     
-    const tasks = await taskService.getAllTasks(assigneeFilter);
+    const tasks = await taskService.getAllTasks(assigneeFilter, tagParam, boardParam);
     const response: ApiResponse<ListTasksResponse> = {
       success: true,
       data: {

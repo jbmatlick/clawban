@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import { DragDropContext, DropResult } from 'react-beautiful-dnd';
-import type { TaskStatus, TaskAssignee } from '../../../contracts/types';
+import type { TaskStatus, TaskAssignee, BoardType } from '../../../contracts/types';
 import { KanbanColumn } from './KanbanColumn';
 import { useTasks, useMoveTask } from '../api/hooks';
 import { Loader2, X } from 'lucide-react';
@@ -20,6 +20,7 @@ const COLUMNS: Array<{ status: TaskStatus; title: string; color: string }> = [
 type FilterType = 'all' | 'rufus' | 'james' | 'unassigned';
 
 export function KanbanBoard() {
+  const [board, setBoard] = useState<BoardType>('work');
   const [filter, setFilter] = useState<FilterType>('all');
   const [tagFilter, setTagFilter] = useState<string | undefined>(undefined);
   
@@ -29,7 +30,7 @@ export function KanbanBoard() {
     filter === 'unassigned' ? null :
     filter;
   
-  const { data, isLoading, error } = useTasks(assigneeFilter, tagFilter);
+  const { data, isLoading, error } = useTasks(assigneeFilter, tagFilter, board);
   const moveTask = useMoveTask();
   
   // Extract unique tags from all tasks
@@ -78,7 +79,31 @@ export function KanbanBoard() {
 
   return (
     <>
-      {/* Filter Buttons */}
+      {/* Board Tabs */}
+<div className="flex gap-4 mb-4">
+  <button
+    onClick={() => setBoard('work')}
+    className={cn(
+      'px-4 py-2 rounded-lg font-medium transition-colors',
+      board === 'work'
+        ? 'bg-primary text-primary-foreground'
+        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+    )}
+  >
+    🧑‍💼 Work
+  </button>
+  <button
+    onClick={() => setBoard('personal')}
+    className={cn(
+      'px-4 py-2 rounded-lg font-medium transition-colors',
+      board === 'personal'
+        ? 'bg-primary text-primary-foreground'
+        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+    )}
+  >
+    🏡 Personal
+  </button>
+</div>
       <div className="space-y-3 mb-4">
         {/* Assignee Filters */}
         <div className="flex flex-wrap gap-2">

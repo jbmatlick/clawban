@@ -17,7 +17,7 @@ async function migrate() {
     const data = await readData<TasksData>();
     let updated = 0;
     
-    data.tasks.forEach((task: any) => {
+    data.tasks.forEach((task: Task & { assignee?: string | null }) => {
       if (task.assignee === undefined) {
         task.assignee = null;
         updated++;

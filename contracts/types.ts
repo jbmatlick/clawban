@@ -19,6 +19,11 @@ export type TaskStatus = 'new' | 'approved' | 'in-progress' | 'complete';
 export type TaskAssignee = 'rufus' | 'james' | null;
 
 /**
+ * Board type for organizing tasks
+ */
+export type BoardType = 'work' | 'personal';
+
+/**
  * Tag for categorizing tasks
  */
 export interface Tag {
@@ -49,6 +54,7 @@ export interface Task {
   estimated_dollar_cost: number;
   status: TaskStatus;
   assignee: TaskAssignee;
+  board: BoardType;
   tags: string[]; // array of tag names
   created_at: string;
   updated_at: string;
@@ -66,6 +72,7 @@ export interface CreateTaskRequest {
   estimated_token_cost?: number;
   estimated_dollar_cost?: number;
   assignee?: TaskAssignee;
+  board?: BoardType; // default: 'work'
   tags?: string[]; // array of tag names
 }
 
@@ -80,6 +87,7 @@ export interface UpdateTaskRequest {
   estimated_dollar_cost?: number;
   status?: TaskStatus;
   assignee?: TaskAssignee;
+  board?: BoardType;
   tags?: string[]; // array of tag names
 }
 

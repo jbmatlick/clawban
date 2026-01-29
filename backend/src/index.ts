@@ -98,7 +98,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 // Health check (public - no auth required)
 app.get('/health', (_req, res) => {
   res.json({
-    status: 'healthy',
+    status: 'ok',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   });

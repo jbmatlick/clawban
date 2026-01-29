@@ -9,6 +9,7 @@ import type {
   CreateTaskRequest,
   UpdateTaskRequest,
   TaskStatus,
+  BoardType,
 } from '../../../contracts/types.js';
 import * as storage from './supabase-storage.service.js';
 import { ensureTagsExist } from './tag.service.js';
@@ -20,13 +21,23 @@ interface TasksData {
 /**
  * Get all tasks with optional filtering
  */
-export async function getAllTasks(assignee?: string | null, tag?: string): Promise<Task[]> {
+export async function getAllTasks(
+  assignee?: string | null, 
+  tag?: string,
+  board?: BoardType
+): Promise<Task[]> {
   const data = await storage.readData<TasksData>();
   
   let tasks = data.tasks.map(task => ({
     ...task,
     tags: task.tags || [],
+    board: task.board || 'work', // default existing tasks to 'work'
   }));
+  
+  // Filter by board if specified
+  if (board) {
+    tasks = tasks.filter(task => task.board === board);
+  }
   
   // Filter by assignee if specified
   if (assignee !== undefined) {
@@ -64,6 +75,7 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
     estimated_dollar_cost: request.estimated_dollar_cost || 0,
     status: 'new',
     assignee: request.assignee || null,
+    board: request.board || 'work',
     tags,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
