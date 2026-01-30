@@ -1,14 +1,18 @@
 /**
- * Authentication middleware using Supabase JWT
+ * Authentication middleware using Supabase JWT or Agent API Key
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { supabase, isAuthEnabled } from '../lib/supabase.js';
 
+// Agent API key for programmatic access (e.g., from Clawdbot)
+const AGENT_API_KEY = process.env.AGENT_API_KEY;
+
 // Type for authenticated user
 export interface AuthUser {
   id: string;
   email?: string;
+  isAgent?: boolean;
 }
 
 // Extend Express Request via module augmentation
@@ -30,7 +34,7 @@ function extractToken(authHeader: string | undefined): string | null {
 }
 
 /**
- * Middleware to verify Supabase JWT and attach user to request
+ * Middleware to verify Supabase JWT or Agent API Key and attach user to request
  */
 export async function requireAuth(
   req: Request,
@@ -51,6 +55,13 @@ export async function requireAuth(
       success: false,
       error: 'Missing authorization token',
     });
+    return;
+  }
+
+  // Check for agent API key first
+  if (AGENT_API_KEY && token === AGENT_API_KEY) {
+    req.user = { id: 'agent-rufus', email: 'rufus@clawdbot.local', isAgent: true };
+    next();
     return;
   }
 
