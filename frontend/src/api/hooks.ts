@@ -47,7 +47,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: (request: CreateTaskRequest) => api.createTask(request),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks });
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
@@ -62,7 +62,7 @@ export function useUpdateTask() {
     mutationFn: ({ id, request }: { id: string; request: UpdateTaskRequest }) =>
       api.updateTask(id, request),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks });
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
@@ -76,7 +76,7 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: (id: string) => api.deleteTask(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks });
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
@@ -91,7 +91,7 @@ export function useMoveTask() {
     mutationFn: ({ id, request }: { id: string; request: MoveTaskRequest }) =>
       api.moveTask(id, request),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks });
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
