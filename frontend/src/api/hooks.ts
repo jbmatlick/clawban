@@ -8,21 +8,22 @@ import type {
   UpdateTaskRequest,
   MoveTaskRequest,
   TaskAssignee,
+  BoardType,
 } from '../../../contracts/types';
 import * as api from './client';
 
 const QUERY_KEYS = {
-  tasks: (assignee?: TaskAssignee, tag?: string) => ['tasks', assignee, tag] as const,
+  tasks: (assignee?: TaskAssignee, tag?: string, board?: BoardType) => ['tasks', assignee, tag, board] as const,
   task: (id: string) => ['tasks', id] as const,
 };
 
 /**
  * Hook to fetch all tasks with optional filters
  */
-export function useTasks(assignee?: TaskAssignee, tag?: string) {
+export function useTasks(assignee?: TaskAssignee, tag?: string, board?: BoardType) {
   return useQuery({
-    queryKey: QUERY_KEYS.tasks(assignee, tag),
-    queryFn: () => api.listTasks(assignee, tag),
+    queryKey: QUERY_KEYS.tasks(assignee, tag, board),
+    queryFn: () => api.listTasks(assignee, tag, board),
   });
 }
 

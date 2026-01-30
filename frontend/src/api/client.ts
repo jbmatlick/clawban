@@ -10,6 +10,7 @@ import type {
   ApiResponse,
   ListTasksResponse,
   TaskAssignee,
+  BoardType,
 } from '../../../contracts/types';
 import { supabase } from '../lib/supabase';
 
@@ -50,7 +51,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function listTasks(
   assignee?: TaskAssignee,
-  tag?: string
+  tag?: string,
+  board?: BoardType
 ): Promise<ListTasksResponse> {
   const headers = await getAuthHeaders();
   
@@ -61,6 +63,9 @@ export async function listTasks(
   }
   if (tag) {
     params.append('tag', tag);
+  }
+  if (board) {
+    params.append('board', board);
   }
   
   const query = params.toString() ? `?${params.toString()}` : '';
